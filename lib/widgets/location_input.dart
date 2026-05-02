@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-import 'package:favorite_places/models/place.dart';
+import '../models/place.dart';
 
 class LocationInput extends StatefulWidget {
   const LocationInput({super.key, required this.onSelectLocation});
@@ -20,15 +17,6 @@ class _LocationInputState extends State<LocationInput> {
   PlaceLocation? _pickedLocation;
   var _isGettingLocation = false;
 
-  String get locationImage {
-    if (_pickedLocation == null) {
-      return '';
-    }
-    final lat = _pickedLocation!.latitude;
-    final lng = _pickedLocation!.longitude;
-    return 'https://maps.googleapis.com/maps/api/staticmap?center=$lat,$lng=&zoom=16&size=600x300&maptype=roadmap&markers=color:red%7Clabel:A%7C$lat,$lng&key=AIzaSyDLcwxUggpPZo8lcbH0TB4Crq5SJjtj4ag';
-  }
-
   void _getCurrentLocation() async {
     Location location = Location();
 
@@ -36,6 +24,7 @@ class _LocationInputState extends State<LocationInput> {
     PermissionStatus permissionGranted;
     LocationData locationData;
 
+    // cek GPS aktif
     serviceEnabled = await location.serviceEnabled();
     if (!serviceEnabled) {
       serviceEnabled = await location.requestService();
@@ -44,6 +33,7 @@ class _LocationInputState extends State<LocationInput> {
       }
     }
 
+    // cek permission
     permissionGranted = await location.hasPermission();
     if (permissionGranted == PermissionStatus.denied) {
       permissionGranted = await location.requestPermission();
@@ -57,29 +47,29 @@ class _LocationInputState extends State<LocationInput> {
     });
 
     locationData = await location.getLocation();
+
     final lat = locationData.latitude;
     final lng = locationData.longitude;
 
     if (lat == null || lng == null) {
+      setState(() {
+        _isGettingLocation = false;
+      });
       return;
     }
 
-    final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=AIzaSyDLcwxUggpPZo8lcbH0TB4Crq5SJjtj4ag');
-    final response = await http.get(url);
-    final resData = json.decode(response.body);
-    final address = resData['results'][0]['formatted_address'];
+    final newLocation = PlaceLocation(
+      latitude: lat,
+      longitude: lng,
+      address: 'Lat: $lat, Lng: $lng',
+    );
 
     setState(() {
-      _pickedLocation = PlaceLocation(
-        latitude: lat,
-        longitude: lng,
-        address: address,
-      );
+      _pickedLocation = newLocation;
       _isGettingLocation = false;
     });
 
-    widget.onSelectLocation(_pickedLocation!);
+    widget.onSelectLocation(newLocation);
   }
 
   @override
@@ -92,17 +82,24 @@ class _LocationInputState extends State<LocationInput> {
           ),
     );
 
-    if (_pickedLocation != null) {
-      previewContent = Image.network(
-        locationImage,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-      );
-    }
-
     if (_isGettingLocation) {
       previewContent = const CircularProgressIndicator();
+    } else if (_pickedLocation != null) {
+      previewContent = Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.location_on, size: 40),
+          const SizedBox(height: 8),
+          Text(
+            'Lat: ${_pickedLocation!.latitude}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          Text(
+            'Lng: ${_pickedLocation!.longitude}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      );
     }
 
     return Column(
@@ -120,17 +117,12 @@ class _LocationInputState extends State<LocationInput> {
           child: previewContent,
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextButton.icon(
               icon: const Icon(Icons.location_on),
               label: const Text('Get Current Location'),
               onPressed: _getCurrentLocation,
-            ),
-            TextButton.icon(
-              icon: const Icon(Icons.map),
-              label: const Text('Select on Map'),
-              onPressed: () {},
             ),
           ],
         ),
