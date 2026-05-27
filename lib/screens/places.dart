@@ -28,22 +28,25 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your Places'),
+        title: const Text('Favorite Places'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (ctx) => const AddPlaceScreen(),
-                ),
-              );
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: IconButton(
+              icon: const Icon(Icons.add_rounded),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (ctx) => const AddPlaceScreen(),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(16),
         child: FutureBuilder(
           future: _placesFuture,
           builder: (context, snapshot) =>

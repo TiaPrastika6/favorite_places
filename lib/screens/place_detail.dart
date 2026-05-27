@@ -1,16 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/place.dart';
-import '../screens/map.dart';
 
 class PlaceDetailScreen extends StatelessWidget {
   const PlaceDetailScreen({super.key, required this.place});
 
   final Place place;
 
-  String get locationImage {
+  Future<void> _openMap(BuildContext context) async {
     final lat = place.location.latitude;
     final lng = place.location.longitude;
-    return 'https://maps.googleapis.com/maps/api/staticmap?center=$lat,$lng=&zoom=16&size=600x300&maptype=roadmap&markers=color:red%7Clabel:A%7C$lat,$lng&key=AIzaSyDLcwxUggpPZo8lcbH0TB4Crq5SJjtj4ag';
+
+    final geoUrl = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
+    final webUrl = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+    );
+
+    try {
+      final opened = await launchUrl(
+        geoUrl,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!opened) {
+        await launchUrl(
+          webUrl,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open map.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -31,51 +55,82 @@ class PlaceDetailScreen extends StatelessWidget {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (ctx) => MapScreen(
-                          location: place.location,
-                          isSelecting: false,
-                        ),
-                      ),
-                    );
-                  },
-                  child: CircleAvatar(
-                    radius: 70,
-                    backgroundImage: NetworkImage(locationImage),
-                  ),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 80, 20, 24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.92),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
-                Container(
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
-                  ),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.transparent,
-                        Colors.black54,
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                  child: Text(
-                    place.location.address,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    place.title,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                          color: Theme.of(context).colorScheme.onBackground,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  GestureDetector(
+                    onTap: () {
+                      _openMap(context);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 30, 30, 40),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.35),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.map_rounded,
+                            size: 44,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'View Location on Map',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium!
+                                .copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            place.location.address,
+                            textAlign: TextAlign.center,
+                            style:
+                                Theme.of(context).textTheme.bodySmall!.copyWith(
+                                      color: Colors.white70,
+                                    ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          )
+          ),
         ],
       ),
     );

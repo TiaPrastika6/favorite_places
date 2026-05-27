@@ -46,36 +46,54 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add new Place'),
+        title: const Text('Add New Place'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              decoration: const InputDecoration(labelText: 'Title'),
-              controller: _titleController,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onBackground,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 30, 30, 40),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.08),
+                ),
+              ),
+              child: TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  prefixIcon: Icon(Icons.place_rounded),
+                  border: OutlineInputBorder(),
+                ),
+                controller: _titleController,
+                style: const TextStyle(
+                  color: Colors.white,
+                ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             ImageInput(
               onPickImage: (image) {
                 _selectedImage = image;
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             LocationInput(
               onSelectLocation: (location) {
                 _selectedLocation = location;
               },
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _savePlace,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Place'),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _savePlace,
+                icon: const Icon(Icons.add_location_alt_rounded),
+                label: const Text('Add Place'),
+              ),
             ),
           ],
         ),

@@ -12,7 +12,8 @@ Future<Database> _getDatabase() async {
     path.join(dbPath, 'places.db'),
     onCreate: (db, version) {
       return db.execute(
-          'CREATE TABLE user_places(id TEXT PRIMARY KEY, title TEXT, image TEXT, lat REAL, lng REAL, address TEXT)');
+        'CREATE TABLE user_places(id TEXT PRIMARY KEY, title TEXT, image TEXT, lat REAL, lng REAL, address TEXT)',
+      );
     },
     version: 1,
   );
@@ -25,6 +26,7 @@ class UserPlacesNotifier extends StateNotifier<List<Place>> {
   Future<void> loadPlaces() async {
     final db = await _getDatabase();
     final data = await db.query('user_places');
+
     final places = data
         .map(
           (row) => Place(
@@ -52,7 +54,7 @@ class UserPlacesNotifier extends StateNotifier<List<Place>> {
         Place(title: title, image: copiedImage, location: location);
 
     final db = await _getDatabase();
-    db.insert('user_places', {
+    await db.insert('user_places', {
       'id': newPlace.id,
       'title': newPlace.title,
       'image': newPlace.image.path,
@@ -62,6 +64,34 @@ class UserPlacesNotifier extends StateNotifier<List<Place>> {
     });
 
     state = [newPlace, ...state];
+  }
+
+  Future<void> deletePlace(String id) async {
+    final placeIndex = state.indexWhere((place) => place.id == id);
+
+    if (placeIndex == -1) {
+      return;
+    }
+
+    final placeToDelete = state[placeIndex];
+
+    final db = await _getDatabase();
+    await db.delete(
+      'user_places',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    state = state.where((place) => place.id != id).toList();
+
+    try {
+      if (await placeToDelete.image.exists()) {
+        await placeToDelete.image.delete();
+      }
+    } catch (error) {
+      // Gambar gagal dihapus tidak masalah,
+      // yang penting data tempat sudah terhapus dari database.
+    }
   }
 }
 
